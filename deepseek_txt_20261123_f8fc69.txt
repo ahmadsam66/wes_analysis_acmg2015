@@ -1,0 +1,45 @@
+# =============================================================================
+#  WES-ACMG-Pipeline.config.txt
+#  Configuration for WES-ACMG-Pipeline.sh
+#  Edit every value before running. Paths must be ABSOLUTE.
+# =============================================================================
+
+# --- Sample ------------------------------------------------------------------
+SAMPLE="Sample01"
+LIBRARY="Lib01"
+R1_FASTQ="/data/fastq/Sample01_R1.fastq.gz"
+R2_FASTQ="/data/fastq/Sample01_R2.fastq.gz"
+THREADS=8
+
+# --- Output root -------------------------------------------------------------
+OUT_DIR="/data/results/WES_${SAMPLE}"
+
+# --- Reference genome & known sites (GATK resource bundle) -------------------
+REF_FASTA="/ref/GRCh38/GRCh38.fa"
+DBSNP_VCF="/ref/GRCh38/dbsnp_146.hg38.vcf.gz"
+MILLS_VCF="/ref/GRCh38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+GENOME_BUILD="hg38"          # ANNOVAR buildver: hg19 or hg38
+
+# --- cutadapt options --------------------------------------------------------
+ADAPTER_R1="AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
+ADAPTER_R2="AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+CUTADAPT_QUAL=20
+CUTADAPT_MINLEN=36
+CUTADAPT_MAXN=0
+
+# --- vcffilter thresholds ----------------------------------------------------
+VCFFILTER_QUAL=30
+VCFFILTER_DP=10
+VCFFILTER_MAXDP=200
+
+# --- ANNOVAR -----------------------------------------------------------------
+ANNOVAR_DB="/tools/annovar/humandb"
+ANNOVAR_PROTOCOLS="refGene,cytoBand,avsnp150,gnomad41_genome,clinvar_20240917,dbnsfp47a"
+ANNOVAR_OPERATIONS="gx,r,f,f,f,f"
+
+# --- Selected gene list ------------------------------------------------------
+# One gene symbol per line (no header). Example:
+#   BRCA1
+#   BRCA2
+#   TP53
+GENE_LIST="/data/panels/my_gene_list.txt"
