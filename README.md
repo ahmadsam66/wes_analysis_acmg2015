@@ -1,11 +1,8 @@
-Here is a complete, production-ready `README.md` tailored specifically to your `WES-ACMG-Pipeline.sh` and `WES-ACMG-Pipeline.config.txt` files. It covers installation (via Conda/Mamba and manual setups), reference bundle preparation, ANNOVAR database downloads, CLI usage, configuration parameters, and output structures.
-
-```markdown
 # WES-ACMG-Pipeline
 
 A modular, human-readable Bash pipeline for **Whole-Exome Sequencing (WES) germline short-variant discovery and ACMG/AMP 2015 rule-based classification**.
 
-Designed for small-to-medium single-sample or per-sample clinical research workflows, this pipeline implements **GATK4 Best Practices** for germline short variants using **hard-filtering** (ideal when cohort sizes are too small for Variant Quality Score Recalibration / VQSR) and automatically generates a self-contained HTML summary report.
+Designed for small-to-medium single-sample or per-sample clinical research workflows, this pipeline implements **GATK4 Best Practices** for germline short variants using **hard-filtering** (recommended when cohort sizes are too small for Variant Quality Score Recalibration / VQSR) and automatically generates a self-contained HTML summary report.
 
 ---
 
@@ -66,13 +63,11 @@ mamba create -n wes-acmg -c conda-forge -c bioconda \
   python>=3.8
 
 conda activate wes-acmg
-
 ```
 
 *(Note: `htslib` provides `bgzip` and `tabix`.)*
 
 ### 2. Installing ANNOVAR (Manual Registration Required)
-
 ANNOVAR is free for academic/non-profit users but requires registration and cannot be distributed via Conda:
 
 1. Register and download the archive from the [ANNOVAR download portal](https://www.openbioinformatics.org/annovar/annovar_download_form.php).
@@ -82,18 +77,15 @@ ANNOVAR is free for academic/non-profit users but requires registration and cann
 tar -xzvf annovar.latest.tar.gz -C /tools/
 export PATH="/tools/annovar:$PATH"
 # Tip: Add the export line to your ~/.bashrc so table_annovar.pl is always found
-
 ```
 
 ### 3. Verify All Tools
-
 Confirm all required executables are visible in your `$PATH`:
 
 ```bash
 for tool in fastqc cutadapt bwa samtools picard gatk vcffilter table_annovar.pl bgzip tabix python3; do
   command -v "$tool" >/dev/null && echo "[OK] $tool" || echo "[MISSING] $tool"
 done
-
 ```
 
 ---
@@ -101,7 +93,6 @@ done
 ## Reference & Database Setup
 
 ### 1. Reference Genome & GATK Known Sites (`hg38`)
-
 Download the reference FASTA and known-sites VCFs from the [GATK Resource Bundle (Google Cloud)](https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0):
 
 ```bash
@@ -120,11 +111,9 @@ bgzip dbsnp_146.hg38.vcf && tabix -p vcf dbsnp_146.hg38.vcf.gz
 
 # Generate BWA index files (.amb, .ann, .bwt, .pac, .sa)
 bwa index GRCh38.fa
-
 ```
 
 ### 2. ANNOVAR Annotation Databases
-
 Download the databases matching the `ANNOVAR_PROTOCOLS` defined in your config file:
 
 ```bash
@@ -136,11 +125,9 @@ perl annotate_variation.pl -buildver hg38 -downdb -webfrom annovar avsnp150 huma
 perl annotate_variation.pl -buildver hg38 -downdb -webfrom annovar gnomad41_genome humandb/
 perl annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
 perl annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp47a humandb/
-
 ```
 
 ### 3. Target Gene List (`GENE_LIST`)
-
 Create a plain-text file containing **one HGNC gene symbol per line with no header**:
 
 ```bash
@@ -152,7 +139,6 @@ TP53
 PALB2
 CHEK2
 EOF
-
 ```
 
 ---
@@ -195,7 +181,6 @@ ANNOVAR_OPERATIONS="gx,r,f,f,f,f"
 
 # Target Gene Panel
 GENE_LIST="/data/panels/my_gene_list.txt"
-
 ```
 
 > **Note on `ANNOVAR_PROTOCOLS`:** Step 9 filters by gene symbol using column 7 (`Gene.refGene`) of the `_multianno.txt` file. If you alter the order of `refGene` in `ANNOVAR_PROTOCOLS`, update `$7` in Step 9 accordingly.
@@ -205,33 +190,26 @@ GENE_LIST="/data/panels/my_gene_list.txt"
 ## Usage & CLI Execution
 
 ### 1. Make the Script Executable
-
 ```bash
 chmod +x WES-ACMG-Pipeline.sh
-
 ```
 
 ### 2. Run on a Single Sample
-
 Pass the path to your configuration file as the first positional argument (if omitted, it defaults to `./WES-ACMG-Pipeline.config.txt`):
 
 ```bash
 ./WES-ACMG-Pipeline.sh /absolute/path/to/WES-ACMG-Pipeline.config.txt
-
 ```
 
 ### 3. Run in the Background (Recommended for Large Exomes)
-
 ```bash
 nohup ./WES-ACMG-Pipeline.sh /data/configs/Sample01.config.txt > Sample01.nohup.out 2>&1 &
 
 # Monitor live progress
 tail -f /data/results/WES_Sample01/00_logs/pipeline.log
-
 ```
 
 ### 4. Batch Execution Across Multiple Samples
-
 Create per-sample config files (e.g., `Sample01.config.txt`, `Sample02.config.txt`) and iterate through them sequentially:
 
 ```bash
@@ -239,7 +217,6 @@ for cfg in /data/configs/*.config.txt; do
   echo "Running pipeline for $cfg..."
   ./WES-ACMG-Pipeline.sh "$cfg"
 done
-
 ```
 
 ---
@@ -289,7 +266,6 @@ All results are organized into numbered subdirectories under `$OUT_DIR`:
 │   └── Sample01.ACMG_candidates.txt              # Subset classified as Pathogenic / Likely Pathogenic
 └── 10_report/
     └── Sample01_WES_report.html                  # Self-contained visual summary report
-
 ```
 
 ---
@@ -303,7 +279,3 @@ Step 10 embeds and runs a Python 3 rules engine (`acmg_classify.py`) that parses
 * **Clinical Assertions (`ClinVar`):** Assigns `PP5` for non-conflicting Pathogenic entries and `BP6` for Benign entries.
 
 > **Disclaimer — Research Use Only:** The automated ACMG classification module is a **screening implementation** based on tabular annotations and does not evaluate segregation data, *de novo* status, functional assay literature, or gene-specific dosage sensitivity. All `Pathogenic`, `Likely Pathogenic`, and `VUS` calls must be manually curated by a certified clinical molecular geneticist prior to clinical reporting.
-
-```
-
-```
